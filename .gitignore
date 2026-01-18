@@ -1,0 +1,28 @@
+
+logs/
+airflow-logs/
+spark-logs/
+spark-work/
+postgres/
+# Environment & secrets
+# .env
+# *.env
+
+# Logs
+logs/
+airflow-logs/
+spark-logs/
+spark-work/
+
+# Databases (DO NOT COMMIT)
+mysql/
+postgres/
+minio/
+
+# Dremio runtime data
+dremio/security/
+dremio/pdfs/
+
+# OS / temp
+.DS_Store
+*.log

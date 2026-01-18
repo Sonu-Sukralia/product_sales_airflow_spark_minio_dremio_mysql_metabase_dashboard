@@ -1,0 +1,1334 @@
+# services:
+#   # ---------------------------------------------------------
+#   #  SPARK CLUSTER
+#   # ---------------------------------------------------------
+#   spark-master:
+#     image: sonusukralia/v3_spark_mw:1.0
+#     container_name: spark-master
+#     hostname: spark-master
+#     user: root
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/bitnami/spark/logs /opt/bitnami/spark/work &&
+#       find /opt/bitnami/spark/work -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true &&
+#       find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+#       chmod -R 777 /opt/bitnami/spark/conf /opt/bitnami/spark/logs /opt/bitnami/spark/work 2>/dev/null || true &&
+#       /opt/bitnami/spark/sbin/start-master.sh --webui-port 8080 >>
+#       /opt/bitnami/spark/logs/master.out 2>&1
+#       "
+#     ports:
+#       - "9090:8080"
+#       - "7077:7077"
+#     env_file: .env
+#     environment:
+#       SPARK_MASTER_HOST: spark-master
+#       SPARK_MASTER_WEBUI_PORT: "8080"
+#       SPARK_WORKER_WEBUI_PORT: "8081"
+#       SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+#       SPARK_RPC_ENCRYPTION_ENABLED: "no"
+#       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+#       SPARK_SSL_ENABLED: "no"
+#       SPARK_USER: "root"
+#       PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#       SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+#       SPARK_LOG_DIR: /opt/bitnami/spark/logs
+#     volumes:
+#       - ./jobs:/opt/bitnami/spark/jobs
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/master:/opt/bitnami/spark/logs
+#       - ./spark-work:/opt/bitnami/spark/work
+#       - ./spark-conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf:ro
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8080"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+
+#   spark-worker:
+#     image: sonusukralia/v3_spark_mw:1.0
+#     container_name: spark-worker
+#     hostname: spark-worker
+#     user: root
+#     depends_on: [spark-master]
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/bitnami/spark/logs /opt/bitnami/spark/work &&
+#       find /opt/bitnami/spark/work -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true &&
+#       find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+#       chmod -R 777 /opt/bitnami/spark/conf /opt/bitnami/spark/logs /opt/bitnami/spark/work 2>/dev/null || true &&
+#       exec /opt/bitnami/spark/sbin/start-worker.sh spark://spark-master:7077 >>
+#       /opt/bitnami/spark/logs/worker.out 2>&1
+#       "
+#     ports:
+#       - "8081:8081"
+#     env_file: .env
+#     environment:
+#       SPARK_MODE: worker
+#       SPARK_MASTER_URL: spark://spark-master:7077
+#       SPARK_WORKER_WEBUI_PORT: "8081"
+#       SPARK_WORKER_HOST: spark-worker
+#       SPARK_LOCAL_IP: spark-worker
+#       SPARK_WORKER_BIND_ADDRESS: 0.0.0.0
+#       SPARK_LOCAL_HOSTNAME: spark-worker
+#       SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+#       SPARK_RPC_ENCRYPTION_ENABLED: "no"
+#       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+#       SPARK_SSL_ENABLED: "no"
+#       SPARK_USER: "root"
+#       PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#       SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+#       SPARK_LOG_DIR: /opt/bitnami/spark/logs
+#     volumes:
+#       - ./jobs:/opt/bitnami/spark/jobs
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/worker:/opt/bitnami/spark/logs
+#       - ./spark-work:/opt/bitnami/spark/work
+#       - ./spark-conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf:ro
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   spark-history-server:
+#     image: sonusukralia/v3_spark_mw:1.0
+#     container_name: spark-history-server
+#     user: root
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/bitnami/spark/logs &&
+#       find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+#       chmod -R 777 /opt/bitnami/spark/conf /opt/bitnami/spark/logs /opt/spark-events 2>/dev/null || true &&
+#       exec /opt/bitnami/spark/sbin/start-history-server.sh >>
+#       /opt/bitnami/spark/logs/history.out 2>&1
+#       "
+#     ports:
+#       - "18080:18080"
+#     env_file: .env
+#     environment:
+#       SPARK_HISTORY_OPTS: "-Dspark.history.fs.logDirectory=/opt/spark-events -Dspark.history.fs.update.interval=5s -Dspark.history.ui.maxApplications=100"
+#       SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+#       SPARK_RPC_ENCRYPTION_ENABLED: "no"
+#       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+#       SPARK_SSL_ENABLED: "no"
+#       SPARK_USER: "root"
+#       PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#       SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+#       SPARK_LOG_DIR: /opt/bitnami/spark/logs
+#     volumes:
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/history:/opt/bitnami/spark/logs
+#     depends_on: [spark-master]
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  POSTGRES (for Airflow metadata)
+#   # ---------------------------------------------------------
+#   postgres:
+#     image: sonusukralia/v2_postgres:1.0
+#     container_name: postgres
+#     env_file: .env
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - ./postgres:/var/lib/postgresql/data
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U airflow"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+#   # ---------------------------------------------------------
+#   #  MYSQL (for general database needs)
+#   # ---------------------------------------------------------
+#   mysql:
+#     image: mysql:8.0
+#     container_name: mysql
+#     env_file: .env
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - ./mysql:/var/lib/mysql
+#       - ./mysql-init:/docker-entrypoint-initdb.d
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+#   # ---------------------------------------------------------
+#   #  AIRFLOW
+#   # ---------------------------------------------------------
+#   airflow-scheduler:
+#     image: sonusukralia/v3_airflow_spark:1.0
+#     container_name: airflow-scheduler
+#     user: root
+#     env_file:
+#       - .env
+#       - airflow.env
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs /opt/airflow/data &&
+#       chmod -R 777 /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs /opt/airflow/data 2>/dev/null || true &&
+#       airflow db migrate &&
+#       airflow users create -u $$AIRFLOW_ADMIN_USER -f Admin -l User -r Admin -e $$AIRFLOW_ADMIN_EMAIL -p $$AIRFLOW_ADMIN_PASSWORD 2>/dev/null || true &&
+#       exec airflow scheduler
+#       "
+#     volumes:
+#       - ./jobs:/opt/airflow/jobs
+#       - ./dags:/opt/airflow/dags
+#       - ./logs:/opt/airflow/logs
+#       - ./data:/opt/airflow/data
+#       - ./spark-events:/opt/spark-events
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   airflow-webserver:
+#     image: sonusukralia/v3_airflow_spark:1.0
+#     container_name: airflow-webserver
+#     user: root
+#     env_file:
+#       - .env
+#       - airflow.env
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs &&
+#       chmod -R 777 /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs 2>/dev/null || true &&
+#       exec airflow webserver
+#       "
+#     ports:
+#       - "8085:8080"
+#     volumes:
+#       - ./jobs:/opt/airflow/jobs
+#       - ./dags:/opt/airflow/dags
+#       - ./logs:/opt/airflow/logs
+#       - ./spark-events:/opt/spark-events
+#     depends_on:
+#       - postgres
+#       - airflow-scheduler
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  MINIO (Object Storage)
+#   # ---------------------------------------------------------
+#   minio:
+#     image: sonusukralia/v2_minio:1.0
+#     container_name: minio
+#     env_file: .env
+#     command: ["server", "/data", "--console-address", ":9001"]
+#     ports:
+#       - "9000:9000"
+#       - "9001:9001"
+#     volumes:
+#       - ./minio:/data
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   minio-mc:
+#     image: sonusukralia/v2_minio_client:1.0
+#     container_name: minio-mc
+#     depends_on: [minio]
+#     env_file: .env
+#     entrypoint: >
+#       /bin/sh -c "
+#       until nc -z minio 9000; do echo '...waiting for MinIO...'; sleep 2; done;
+#       sleep 10;
+#       /usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+#       /usr/bin/mc mb minio/warehouse minio/test minio/weather minio/bronze minio/silver minio/gold 2>/dev/null || true;
+#       /usr/bin/mc policy set public minio/warehouse minio/test minio/weather minio/bronze minio/silver minio/gold;
+#       tail -f /dev/null
+#       "
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  JUPYTER NOTEBOOK with Spark
+#   # ---------------------------------------------------------
+#   jupyter-spark:
+#     image: sonusukralia/v3_jupyter_spark:1.0
+#     container_name: jupyter-spark
+#     hostname: jupyter-spark
+#     user: root
+#     env_file: .env
+#     environment:
+#       SPARK_HOME: /opt/spark
+#       PYSPARK_PYTHON: python
+#       PYSPARK_DRIVER_PYTHON: python
+#       SPARK_MASTER: spark://spark-master:7077
+#       SPARK_DRIVER_BINDADDRESS: 0.0.0.0
+#       SPARK_DRIVER_HOST: jupyter-spark
+#       SPARK_DRIVER_PORT: "4041"
+#       SPARK_BLOCKMANAGER_PORT: "4042"
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#     ports:
+#       - "8888:8888"
+#       - "4040:4040"
+#       - "4041:4041"
+#       - "4042:4042"
+#     volumes:
+#       - ./notebooks:/workspace
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/jupyter:/workspace/logs
+#       - ./spark-work:/opt/bitnami/spark/work
+#       - ./spark-conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+#     depends_on:
+#       - spark-master
+#       - minio
+#       - postgres
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  NESSIE (Data Catalog)
+#   # ---------------------------------------------------------
+#   nessie:
+#     image: sonusukralia/v2_nessie:1.0
+#     container_name: nessie
+#     env_file: .env
+#     ports:
+#       - "19120:19120"
+#     volumes:
+#       - ./nessie:/nessie
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  DREMIO (Data Lakehouse)
+#   # ---------------------------------------------------------
+#   dremio:
+#     platform: linux/x86_64
+#     image: sonusukralia/v2_dremio:1.0
+#     container_name: dremio
+#     user: "0:0"
+#     env_file: .env
+#     ports:
+#       - "9047:9047"
+#       - "31010:31010"
+#       - "32010:32010"
+#     volumes:
+#       - ./dremio:/opt/dremio/data
+#     depends_on:
+#       - nessie
+#       - minio
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  METABASE (Business Intelligence Dashboard)
+#   # ---------------------------------------------------------
+#   metabase:
+#     image: metabase/metabase:latest
+#     container_name: metabase
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       MB_DB_TYPE: postgres
+#       MB_DB_DBNAME: metabase
+#       MB_DB_PORT: 5432
+#       MB_DB_USER: airflow
+#       MB_DB_PASS: airflow
+#       MB_DB_HOST: postgres
+#     volumes:
+#       - ./metabase-data:/metabase-data
+#     depends_on:
+#       - postgres
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+
+# # ---------------------------------------------------------
+# #  NETWORKS
+# # ---------------------------------------------------------
+# networks:
+#   data-platform-network:
+#     driver: bridge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# services:
+#   # ---------------------------------------------------------
+#   #  SPARK CLUSTER
+#   # ---------------------------------------------------------
+#   spark-master:
+#     image: sonusukralia/v3_spark_mw:1.0
+#     container_name: spark-master
+#     hostname: spark-master
+#     user: root
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/bitnami/spark/logs /opt/bitnami/spark/work &&
+#       find /opt/bitnami/spark/work -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true &&
+#       find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+#       chmod -R 777 /opt/bitnami/spark/conf /opt/bitnami/spark/logs /opt/bitnami/spark/work 2>/dev/null || true &&
+#       /opt/bitnami/spark/sbin/start-master.sh --webui-port 8080 >>
+#       /opt/bitnami/spark/logs/master.out 2>&1
+#       "
+#     ports:
+#       - "9090:8080"
+#       - "7077:7077"
+#     env_file: .env
+#     environment:
+#       SPARK_MASTER_HOST: spark-master
+#       SPARK_MASTER_WEBUI_PORT: "8080"
+#       SPARK_WORKER_WEBUI_PORT: "8081"
+#       SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+#       SPARK_RPC_ENCRYPTION_ENABLED: "no"
+#       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+#       SPARK_SSL_ENABLED: "no"
+#       SPARK_USER: "root"
+#       PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#       SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+#       SPARK_LOG_DIR: /opt/bitnami/spark/logs
+#     volumes:
+#       - ./jobs:/opt/bitnami/spark/jobs
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/master:/opt/bitnami/spark/logs
+#       - ./spark-work:/opt/bitnami/spark/work
+#       - ./spark-conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf:ro
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8080"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+
+#   spark-worker:
+#     image: sonusukralia/v3_spark_mw:1.0
+#     container_name: spark-worker
+#     hostname: spark-worker
+#     user: root
+#     depends_on: [spark-master]
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/bitnami/spark/logs /opt/bitnami/spark/work &&
+#       find /opt/bitnami/spark/work -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true &&
+#       find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+#       chmod -R 777 /opt/bitnami/spark/conf /opt/bitnami/spark/logs /opt/bitnami/spark/work 2>/dev/null || true &&
+#       exec /opt/bitnami/spark/sbin/start-worker.sh spark://spark-master:7077 >>
+#       /opt/bitnami/spark/logs/worker.out 2>&1
+#       "
+#     ports:
+#       - "8081:8081"
+#     env_file: .env
+#     environment:
+#       SPARK_MODE: worker
+#       SPARK_MASTER_URL: spark://spark-master:7077
+#       SPARK_WORKER_WEBUI_PORT: "8081"
+#       SPARK_WORKER_HOST: spark-worker
+#       SPARK_LOCAL_IP: spark-worker
+#       SPARK_WORKER_BIND_ADDRESS: 0.0.0.0
+#       SPARK_LOCAL_HOSTNAME: spark-worker
+#       SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+#       SPARK_RPC_ENCRYPTION_ENABLED: "no"
+#       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+#       SPARK_SSL_ENABLED: "no"
+#       SPARK_USER: "root"
+#       PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#       SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+#       SPARK_LOG_DIR: /opt/bitnami/spark/logs
+#     volumes:
+#       - ./jobs:/opt/bitnami/spark/jobs
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/worker:/opt/bitnami/spark/logs
+#       - ./spark-work:/opt/bitnami/spark/work
+#       - ./spark-conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf:ro
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   spark-history-server:
+#     image: sonusukralia/v3_spark_mw:1.0
+#     container_name: spark-history-server
+#     user: root
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/bitnami/spark/logs &&
+#       find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+#       chmod -R 777 /opt/bitnami/spark/conf /opt/bitnami/spark/logs /opt/spark-events 2>/dev/null || true &&
+#       exec /opt/bitnami/spark/sbin/start-history-server.sh >>
+#       /opt/bitnami/spark/logs/history.out 2>&1
+#       "
+#     ports:
+#       - "18080:18080"
+#     env_file: .env
+#     environment:
+#       SPARK_HISTORY_OPTS: "-Dspark.history.fs.logDirectory=/opt/spark-events -Dspark.history.fs.update.interval=5s -Dspark.history.ui.maxApplications=100"
+#       SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+#       SPARK_RPC_ENCRYPTION_ENABLED: "no"
+#       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+#       SPARK_SSL_ENABLED: "no"
+#       SPARK_USER: "root"
+#       PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#       SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+#       SPARK_LOG_DIR: /opt/bitnami/spark/logs
+#     volumes:
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/history:/opt/bitnami/spark/logs
+#     depends_on: [spark-master]
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  POSTGRES (for Airflow metadata)
+#   # ---------------------------------------------------------
+#   postgres:
+#     image: sonusukralia/v2_postgres:1.0
+#     container_name: postgres
+#     env_file: .env
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - ./postgres:/var/lib/postgresql/data
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U airflow"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+#   # ---------------------------------------------------------
+#   #  MYSQL (for general database needs)
+#   # ---------------------------------------------------------
+#   mysql:
+#     image: mysql:8.0
+#     container_name: mysql
+#     env_file: .env
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - ./mysql:/var/lib/mysql
+#       - ./mysql-init:/docker-entrypoint-initdb.d
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+#   # ---------------------------------------------------------
+#   #  AIRFLOW
+#   # ---------------------------------------------------------
+#   airflow-scheduler:
+#     image: sonusukralia/v3_airflow_spark:1.0
+#     container_name: airflow-scheduler
+#     user: root
+#     env_file:
+#       - .env
+#       - airflow.env
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs /opt/airflow/data &&
+#       chmod -R 777 /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs /opt/airflow/data 2>/dev/null || true &&
+#       airflow db migrate &&
+#       airflow users create -u $$AIRFLOW_ADMIN_USER -f Admin -l User -r Admin -e $$AIRFLOW_ADMIN_EMAIL -p $$AIRFLOW_ADMIN_PASSWORD 2>/dev/null || true &&
+#       exec airflow scheduler
+#       "
+#     volumes:
+#       - ./jobs:/opt/airflow/jobs
+#       - ./dags:/opt/airflow/dags
+#       - ./logs:/opt/airflow/logs
+#       - ./data:/opt/airflow/data
+#       - ./spark-events:/opt/spark-events
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   airflow-webserver:
+#     image: sonusukralia/v3_airflow_spark:1.0
+#     container_name: airflow-webserver
+#     user: root
+#     env_file:
+#       - .env
+#       - airflow.env
+#     command: >
+#       bash -c "
+#       mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs &&
+#       chmod -R 777 /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs 2>/dev/null || true &&
+#       exec airflow webserver
+#       "
+#     ports:
+#       - "8085:8080"
+#     volumes:
+#       - ./jobs:/opt/airflow/jobs
+#       - ./dags:/opt/airflow/dags
+#       - ./logs:/opt/airflow/logs
+#       - ./spark-events:/opt/spark-events
+#     depends_on:
+#       - postgres
+#       - airflow-scheduler
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  MINIO (Object Storage)
+#   # ---------------------------------------------------------
+#   minio:
+#     image: sonusukralia/v2_minio:1.0
+#     container_name: minio
+#     env_file: .env
+#     command: ["server", "/data", "--console-address", ":9001"]
+#     ports:
+#       - "9000:9000"
+#       - "9001:9001"
+#     volumes:
+#       - ./minio:/data
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   minio-mc:
+#     image: sonusukralia/v2_minio_client:1.0
+#     container_name: minio-mc
+#     depends_on: [minio]
+#     env_file: .env
+#     entrypoint: >
+#       /bin/sh -c "
+#       until nc -z minio 9000; do echo '...waiting for MinIO...'; sleep 2; done;
+#       sleep 10;
+#       /usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+#       /usr/bin/mc mb minio/warehouse minio/test minio/weather minio/bronze minio/silver minio/gold 2>/dev/null || true;
+#       /usr/bin/mc policy set public minio/warehouse minio/test minio/weather minio/bronze minio/silver minio/gold;
+#       tail -f /dev/null
+#       "
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  JUPYTER NOTEBOOK with Spark
+#   # ---------------------------------------------------------
+#   jupyter-spark:
+#     image: sonusukralia/v3_jupyter_spark:1.0
+#     container_name: jupyter-spark
+#     hostname: jupyter-spark
+#     user: root
+#     env_file: .env
+#     environment:
+#       SPARK_HOME: /opt/spark
+#       PYSPARK_PYTHON: python
+#       PYSPARK_DRIVER_PYTHON: python
+#       SPARK_MASTER: spark://spark-master:7077
+#       SPARK_DRIVER_BINDADDRESS: 0.0.0.0
+#       SPARK_DRIVER_HOST: jupyter-spark
+#       SPARK_DRIVER_PORT: "4041"
+#       SPARK_BLOCKMANAGER_PORT: "4042"
+#       SPARK_EVENTLOG_ENABLED: "true"
+#       SPARK_EVENTLOG_DIR: /opt/spark-events
+#     ports:
+#       - "8888:8888"
+#       - "4040:4040"
+#       - "4041:4041"
+#       - "4042:4042"
+#     volumes:
+#       - ./notebooks:/workspace
+#       - ./spark-events:/opt/spark-events
+#       - ./spark-logs/jupyter:/workspace/logs
+#       - ./spark-work:/opt/bitnami/spark/work
+#       - ./spark-conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+#     depends_on:
+#       - spark-master
+#       - minio
+#       - postgres
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  NESSIE (Data Catalog)
+#   # ---------------------------------------------------------
+#   nessie:
+#     image: sonusukralia/v2_nessie:1.0
+#     container_name: nessie
+#     env_file: .env
+#     ports:
+#       - "19120:19120"
+#     volumes:
+#       - ./nessie:/nessie
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  DREMIO (Data Lakehouse)
+#   # ---------------------------------------------------------
+#   dremio:
+#     platform: linux/x86_64
+#     image: sonusukralia/v2_dremio:1.0
+#     container_name: dremio
+#     user: "0:0"
+#     env_file: .env
+#     ports:
+#       - "9047:9047"
+#       - "31010:31010"
+#       - "32010:32010"
+#     volumes:
+#       - ./dremio:/opt/dremio/data
+#     depends_on:
+#       - nessie
+#       - minio
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+
+#   # ---------------------------------------------------------
+#   #  METABASE (Business Intelligence Dashboard)
+#   # ---------------------------------------------------------
+#   metabase:
+#     image: metabase/metabase:latest
+#     container_name: metabase
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       MB_DB_TYPE: postgres
+#       MB_DB_DBNAME: metabase
+#       MB_DB_PORT: 5432
+#       MB_DB_USER: airflow
+#       MB_DB_PASS: airflow
+#       MB_DB_HOST: postgres
+#     volumes:
+#       - ./metabase-data:/metabase-data
+#     depends_on:
+#       - postgres
+#     networks: [data-platform-network]
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+
+# # ---------------------------------------------------------
+# #  NETWORKS
+# # ---------------------------------------------------------
+# networks:
+#   data-platform-network:
+#     driver: bridge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+services:
+  # ---------------------------------------------------------
+  #  SPARK CLUSTER
+  # ---------------------------------------------------------
+  spark-master:
+    image: sonusukralia/v3_spark_mw:1.0
+    container_name: spark-master
+    hostname: spark-master
+    user: root
+    command: >
+      bash -c "
+      mkdir -p /opt/bitnami/spark/logs /opt/bitnami/spark/work /opt/spark-events &&
+      chmod -R 777 /opt/bitnami/spark/logs /opt/bitnami/spark/work /opt/spark-events 2>/dev/null || true &&
+      find /opt/bitnami/spark/work -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true &&
+      find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+      /opt/bitnami/spark/sbin/start-master.sh --webui-port 8080 >>
+      /opt/bitnami/spark/logs/master.out 2>&1
+      "
+    ports:
+      - "9090:8080"
+      - "7077:7077"
+    env_file: .env
+    environment:
+      SPARK_MASTER_HOST: spark-master
+      SPARK_MASTER_WEBUI_PORT: "8080"
+      SPARK_WORKER_WEBUI_PORT: "8081"
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+      SPARK_USER: "root"
+      PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+      SPARK_EVENTLOG_ENABLED: "true"
+      SPARK_EVENTLOG_DIR: /opt/spark-events
+      SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+      SPARK_LOG_DIR: /opt/bitnami/spark/logs
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./spark-events:/opt/spark-events
+      - ./spark-logs/master:/opt/bitnami/spark/logs
+      - ./spark-work:/opt/bitnami/spark/work
+      - ./spark-conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf:ro
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  spark-worker:
+    image: sonusukralia/v3_spark_mw:1.0
+    container_name: spark-worker
+    hostname: spark-worker
+    user: root
+    depends_on: [spark-master]
+    command: >
+      bash -c "
+      mkdir -p /opt/bitnami/spark/logs /opt/bitnami/spark/work /opt/spark-events &&
+      chmod -R 777 /opt/bitnami/spark/logs /opt/bitnami/spark/work /opt/spark-events 2>/dev/null || true &&
+      find /opt/bitnami/spark/work -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true &&
+      find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+      exec /opt/bitnami/spark/sbin/start-worker.sh spark://spark-master:7077 >>
+      /opt/bitnami/spark/logs/worker.out 2>&1
+      "
+    ports:
+      - "8081:8081"
+    env_file: .env
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_WEBUI_PORT: "8081"
+      SPARK_WORKER_HOST: spark-worker
+      SPARK_LOCAL_IP: spark-worker
+      SPARK_WORKER_BIND_ADDRESS: 0.0.0.0
+      SPARK_LOCAL_HOSTNAME: spark-worker
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+      SPARK_USER: "root"
+      PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+      SPARK_EVENTLOG_ENABLED: "true"
+      SPARK_EVENTLOG_DIR: /opt/spark-events
+      SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+      SPARK_LOG_DIR: /opt/bitnami/spark/logs
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./spark-events:/opt/spark-events
+      - ./spark-logs/worker:/opt/bitnami/spark/logs
+      - ./spark-work:/opt/bitnami/spark/work
+      - ./spark-conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf:ro
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  spark-history-server:
+    image: sonusukralia/v3_spark_mw:1.0
+    container_name: spark-history-server
+    user: root
+    command: >
+      bash -c "
+      mkdir -p /opt/bitnami/spark/logs /opt/spark-events &&
+      chmod -R 777 /opt/bitnami/spark/logs /opt/spark-events 2>/dev/null || true &&
+      find /opt/bitnami/spark/logs -name '*.out.*' -mtime +7 -delete 2>/dev/null || true &&
+      exec /opt/bitnami/spark/sbin/start-history-server.sh >>
+      /opt/bitnami/spark/logs/history.out 2>&1
+      "
+    ports:
+      - "18080:18080"
+    env_file: .env
+    environment:
+      SPARK_HISTORY_OPTS: "-Dspark.history.fs.logDirectory=/opt/spark-events -Dspark.history.fs.update.interval=5s -Dspark.history.ui.maxApplications=100"
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+      SPARK_USER: "root"
+      PYSPARK_PYTHON: /opt/bitnami/python/bin/python3
+      SPARK_EVENTLOG_ENABLED: "true"
+      SPARK_EVENTLOG_DIR: /opt/spark-events
+      SPARK_HISTORY_FS_LOGDIRECTORY: /opt/spark-events
+      SPARK_LOG_DIR: /opt/bitnami/spark/logs
+    volumes:
+      - ./spark-events:/opt/spark-events
+      - ./spark-logs/history:/opt/bitnami/spark/logs
+    depends_on: [spark-master]
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------
+  #  POSTGRES (for Airflow metadata)
+  # ---------------------------------------------------------
+  postgres:
+    image: sonusukralia/v2_postgres:1.0
+    container_name: postgres
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+      - ./postgres-logs:/var/log/postgresql
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------
+  #  MYSQL (for general database needs)
+  # ---------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    env_file: .env
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+      - ./mysql-logs:/var/log/mysql
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------
+  #  AIRFLOW
+  # ---------------------------------------------------------
+  airflow-scheduler:
+    image: sonusukralia/v3_airflow_spark:1.0
+    container_name: airflow-scheduler
+    hostname: airflow-scheduler
+    user: root
+    env_file:
+      - .env
+      - airflow.env
+    command: >
+      bash -c "
+      mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs /opt/airflow/data &&
+      chmod -R 777 /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs /opt/airflow/data 2>/dev/null || true &&
+      airflow db migrate &&
+      airflow users create -u $$AIRFLOW_ADMIN_USER -f Admin -l User -r Admin -e $$AIRFLOW_ADMIN_EMAIL -p $$AIRFLOW_ADMIN_PASSWORD 2>/dev/null || true &&
+      exec airflow scheduler
+      "
+    volumes:
+      - ./jobs:/opt/airflow/jobs
+      - ./dags:/opt/airflow/dags
+      - ./airflow-logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - ./spark-events:/opt/spark-events
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  airflow-webserver:
+    image: sonusukralia/v3_airflow_spark:1.0
+    container_name: airflow-webserver
+    hostname: airflow-webserver
+    user: root
+    env_file:
+      - .env
+      - airflow.env
+    command: >
+      bash -c "
+      mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs &&
+      chmod -R 777 /opt/airflow/logs /opt/airflow/dags /opt/airflow/jobs 2>/dev/null || true &&
+      exec airflow webserver
+      "
+    ports:
+      - "8085:8080"
+    volumes:
+      - ./jobs:/opt/airflow/jobs
+      - ./dags:/opt/airflow/dags
+      - ./airflow-logs:/opt/airflow/logs
+      - ./spark-events:/opt/spark-events
+    depends_on:
+      - postgres
+      - airflow-scheduler
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------
+  #  MINIO (Object Storage)
+  # ---------------------------------------------------------
+  minio:
+    image: sonusukralia/v2_minio:1.0
+    container_name: minio
+    env_file: .env
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./minio:/data
+      - ./minio-logs:/root/.minio/logs
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  minio-mc:
+    image: sonusukralia/v2_minio_client:1.0
+    container_name: minio-mc
+    depends_on: [minio]
+    env_file: .env
+    entrypoint: >
+      /bin/sh -c "
+      until nc -z minio 9000; do echo '...waiting for MinIO...'; sleep 2; done;
+      sleep 10;
+      /usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      /usr/bin/mc mb minio/warehouse minio/test minio/weather minio/bronze minio/silver minio/gold 2>/dev/null || true;
+      /usr/bin/mc policy set public minio/warehouse minio/test minio/weather minio/bronze minio/silver minio/gold;
+      tail -f /dev/null
+      "
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------
+  #  JUPYTER NOTEBOOK with Spark
+  # ---------------------------------------------------------
+  jupyter-spark:
+    image: sonusukralia/v3_jupyter_spark:1.0
+    container_name: jupyter-spark
+    hostname: jupyter-spark
+    user: root
+    env_file: .env
+    environment:
+      SPARK_HOME: /opt/spark
+      PYSPARK_PYTHON: python
+      PYSPARK_DRIVER_PYTHON: python
+      SPARK_MASTER: spark://spark-master:7077
+      SPARK_DRIVER_BINDADDRESS: 0.0.0.0
+      SPARK_DRIVER_HOST: jupyter-spark
+      SPARK_DRIVER_PORT: "4041"
+      SPARK_BLOCKMANAGER_PORT: "4042"
+      SPARK_EVENTLOG_ENABLED: "true"
+      SPARK_EVENTLOG_DIR: /opt/spark-events
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+      - "4041:4041"
+      - "4042:4042"
+    volumes:
+      - ./notebooks:/workspace
+      - ./spark-events:/opt/spark-events
+      - ./spark-logs/jupyter:/workspace/logs
+      - ./spark-work:/opt/bitnami/spark/work
+      - ./spark-conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+    depends_on:
+      - spark-master
+      - minio
+      - postgres
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------
+  #  NESSIE (Data Catalog)
+  # ---------------------------------------------------------
+  nessie:
+    image: sonusukralia/v2_nessie:1.0
+    container_name: nessie
+    env_file: .env
+    ports:
+      - "19120:19120"
+    volumes:
+      - ./nessie:/nessie
+      - ./nessie-logs:/nessie/logs
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------
+  #  DREMIO (Data Lakehouse)
+  # ---------------------------------------------------------
+  dremio:
+    platform: linux/x86_64
+    image: sonusukralia/v2_dremio:1.0
+    container_name: dremio
+    user: "0:0"
+    env_file: .env
+    ports:
+      - "9047:9047"
+      - "31010:31010"
+      - "32010:32010"
+    volumes:
+      - ./dremio:/opt/dremio/data
+      - ./dremio-logs:/opt/dremio/logs
+    depends_on:
+      - nessie
+      - minio
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------
+  #  METABASE (Business Intelligence Dashboard)
+  # ---------------------------------------------------------
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: airflow     # en.sonukumar@gmail.com and # Sonukr@0608
+      MB_DB_PASS: airflow
+      MB_DB_HOST: postgres
+    volumes:
+      - ./metabase-data:/metabase-data
+      - ./metabase-logs:/metabase-logs
+    depends_on:
+      - postgres
+    networks: [data-platform-network]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ---------------------------------------------------------
+#  NETWORKS
+# ---------------------------------------------------------
+networks:
+  data-platform-network:
+    driver: bridge
