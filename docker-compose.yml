@@ -1044,7 +1044,7 @@ services:
   #  POSTGRES (for Airflow metadata)
   # ---------------------------------------------------------
   postgres:
-    image: sonusukralia/v2_postgres:1.0
+    image: sonusukralia/v3_postgres:1.0 #sonusukralia/v2_postgres:1.0
     container_name: postgres
     env_file: .env
     ports:
@@ -1069,7 +1069,7 @@ services:
   #  MYSQL (for general database needs)
   # ---------------------------------------------------------
   mysql:
-    image: mysql:8.0
+    image: sonusukralia/v3_mysql:1.0  #mysql:8.0
     container_name: mysql
     env_file: .env
     ports:
@@ -1163,7 +1163,7 @@ services:
   #  MINIO (Object Storage)
   # ---------------------------------------------------------
   minio:
-    image: sonusukralia/v2_minio:1.0
+    image: sonusukralia/v3_minio:1.0 # sonusukralia/v2_minio:1.0
     container_name: minio
     env_file: .env
     command: ["server", "/data", "--console-address", ":9001"]
@@ -1182,7 +1182,7 @@ services:
         max-file: "3"
 
   minio-mc:
-    image: sonusukralia/v2_minio_client:1.0
+    image: sonusukralia/v3_minio_client:1.0 #sonusukralia/v2_minio_client:1.0
     container_name: minio-mc
     depends_on: [minio]
     env_file: .env
@@ -1250,7 +1250,7 @@ services:
   #  NESSIE (Data Catalog)
   # ---------------------------------------------------------
   nessie:
-    image: sonusukralia/v2_nessie:1.0
+    image: sonusukralia/v3_nessie:1.0  # sonusukralia/v2_nessie:1.0
     container_name: nessie
     env_file: .env
     ports:
@@ -1271,7 +1271,7 @@ services:
   # ---------------------------------------------------------
   dremio:
     platform: linux/x86_64
-    image: sonusukralia/v2_dremio:1.0
+    image: sonusukralia/v3_dremio:1.0  #sonusukralia/v2_dremio:1.0
     container_name: dremio
     user: "0:0"
     env_file: .env
@@ -1297,7 +1297,7 @@ services:
   #  METABASE (Business Intelligence Dashboard)
   # ---------------------------------------------------------
   metabase:
-    image: metabase/metabase:latest
+    image: sonusukralia/v3_metabase:1.0  # metabase/metabase:latest
     container_name: metabase
     ports:
       - "3000:3000"
