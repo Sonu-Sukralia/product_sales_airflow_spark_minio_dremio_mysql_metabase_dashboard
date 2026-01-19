@@ -1231,7 +1231,7 @@ SOFTWARE.
 ## 👥 Authors & Acknowledgments
 
 ### Authors
-- **Your Name** - *Sonu Kumar* - [YourGitHub](https://github.com/Sonu-Sukralia)
+- **Your Name** - *Sonu Kumar* - [GitHub](https://github.com/Sonu-Sukralia)
 
 ### Acknowledgments
 - Apache Software Foundation for Spark and Airflow
