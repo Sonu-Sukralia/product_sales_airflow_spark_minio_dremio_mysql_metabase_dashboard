@@ -430,7 +430,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Read gold data
-df = spark.read.parquet("s3a://gold/product-analytics")
+df = spark.read.parquet("s3a://gold/sales/product_analytics")
 df.show()
 ```
 
@@ -714,7 +714,7 @@ based on the `revenue_rank` metric from the
 **Example Notebook**:
 ```python
 # Read product analytics
-df = spark.read.parquet("s3a://gold/product-analytics")
+df = spark.read.parquet("s3a://gold/sales/product_analytics"")
 
 # Find products with >10% market share
 high_performers = df.filter(col("market_share_percent") > 10)
