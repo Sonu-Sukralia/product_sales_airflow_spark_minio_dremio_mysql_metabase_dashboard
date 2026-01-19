@@ -1223,7 +1223,7 @@ SOFTWARE.
 - [ ] Machine learning pipeline integration
 - [ ] Advanced data catalog with DataHub
 - [ ] Delta Lake integration
-- [ ] Kubernetes deployment templates
+- [ ] Kubernetes deployment also done but having some network issue, will fix in future.
 - [ ] CI/CD pipeline with GitHub Actions
 - [ ] Data observability with Great Expectations
 - [ ] Cost optimization dashboard
