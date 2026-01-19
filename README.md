@@ -694,8 +694,9 @@ LIMIT 10;
 ```
 ## Metabase – Top 10 Products Analysis
 
-This dashboard shows the top 10 products ranked by lifetime revenue and quantity,
-generated from MySQL analytics tables and visualized using Metabase.
+This dashboard shows the top 10 products ranked by lifetime revenue,
+based on the `revenue_rank` metric from the
+`analytics.sales_product_analytics` table and visualized using Metabase..
 
 ![Top 10 Products Dashboard](images/metabase_top_10_products.png)
 
