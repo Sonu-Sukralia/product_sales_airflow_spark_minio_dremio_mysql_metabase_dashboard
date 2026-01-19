@@ -1231,7 +1231,7 @@ SOFTWARE.
 ## 👥 Authors & Acknowledgments
 
 ### Authors
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/yourusername)
+- **Your Name** - *Sonu Kumar* - [YourGitHub](https://github.com/Sonu-Sukralia)
 
 ### Acknowledgments
 - Apache Software Foundation for Spark and Airflow
@@ -1243,10 +1243,10 @@ SOFTWARE.
 ## 📞 Support & Contact
 
 ### Getting Help
-- 📧 **Email**: your.email@example.com
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/data-platform/discussions)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/data-platform/issues)
-- 📝 **Documentation**: [Wiki](https://github.com/yourusername/data-platform/wiki)
+- 📧 **Email**: en.sonukumar@gmail.com
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/Sonu-Sukralia)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/Sonu-Sukralia)
+- 📝 **Documentation**: [Wiki](https://github.com/Sonu-Sukralia)
 
 ### Community
 - Join our [Slack Channel](#) for real-time help
